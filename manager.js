@@ -8,13 +8,13 @@ export async function main(ns) {
 	ns.disableLog("getServerMaxMoney")
 	ns.disableLog("getServerMinSecurityLevel")
 	ns.disableLog("getServerSecurityLevel")
+	ns.disableLog("getServerMoneyAvailable")
 	var securityThresh = ns.getServerMinSecurityLevel(target) + 3;
 	//max server money
 	var moneyThresh = ns.getServerMaxMoney(target) * .99;
 	function moneyavailable(target) {
 		var amoney = ns.getServerMoneyAvailable(target)
 		if (amoney == 0) { amoney = 1 }
-		ns.toast(amoney)
 		return amoney;
 	}
 	//get ram costs of different scripts
@@ -29,7 +29,6 @@ export async function main(ns) {
 	var b = 17
 	//get hostname of current machine
 	var hostname = ns.getHostname()
-
 	function freeRAM(hostname) {
 		return ns.getServerMaxRam(hostname) - ns.getServerUsedRam(hostname);
 	}
@@ -44,7 +43,6 @@ export async function main(ns) {
 	}
 	//manager
 	while (true) {
-
 		//This many growth threads are required to double our money
 		var gcycle = Math.floor(ns.growthAnalyze(target, 2))
 		//RAM impact of required growth AND weaken  threads
@@ -94,11 +92,8 @@ export async function main(ns) {
 			if (moneyavailable(target) <= .5 * moneyThresh) {
 				//find out how much growth is needed
 				var totalgrowth = moneyThresh / moneyavailable(target)
-				ns.toast(moneyavailable(target))
 				if (totalgrowth <= 1) { totalgrowth = 1.0001 }
 				//SPAM this many growth cycles
-
-
 				var gcycle = Math.ceil(ns.growthAnalyze(target, totalgrowth))
 			}
 			// total ram needed for weaken threads 
@@ -139,7 +134,6 @@ export async function main(ns) {
 		}
 		//hack
 		else {
-
 			//how many threads are required to hack half the server's money?
 			var hcycle = Math.ceil(.50 / ns.hackAnalyze(target))
 			//security increase of all these threads
