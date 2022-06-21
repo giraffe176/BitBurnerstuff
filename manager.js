@@ -12,8 +12,9 @@ export async function main(ns) {
 	//max server money
 	var moneyThresh = ns.getServerMaxMoney(target) * .99;
 	function moneyavailable(target) {
-		var amoney = ns.getServerMoneyAvailable()
-		if (amoney = 0) { amoney = .01 }
+		var amoney = ns.getServerMoneyAvailable(target)
+		if (amoney == 0) { amoney = 1 }
+		ns.toast(amoney)
 		return amoney;
 	}
 	//get ram costs of different scripts
@@ -30,23 +31,20 @@ export async function main(ns) {
 	var hostname = ns.getHostname()
 
 	function freeRAM(hostname) {
-		var feram = ns.getServerMaxRam(hostname) - ns.getServerUsedRam(hostname)
-		return feram;
+		return ns.getServerMaxRam(hostname) - ns.getServerUsedRam(hostname);
 	}
 	function gtime(target) {
-		var grtime = ns.getGrowTime(target)
-		return grtime;
+		return ns.getGrowTime(target)
 	}
 	function wtime(target) {
-		var wrtime = ns.getWeakenTime(target)
-		return wrtime;
+		return ns.getWeakenTime(target);
 	}
 	function htime(target) {
-		var hrtime = ns.getHackTime(target)
-		return hrtime;
+		return ns.getHackTime(target);
 	}
 	//manager
 	while (true) {
+
 		//This many growth threads are required to double our money
 		var gcycle = Math.floor(ns.growthAnalyze(target, 2))
 		//RAM impact of required growth AND weaken  threads
@@ -59,11 +57,12 @@ export async function main(ns) {
 		var wRAMneeded = wRAM * wgcycle
 		//weaken server to desired level
 		if (ns.getServerSecurityLevel(target) > securityThresh) {
+
 			var cursecurity = ns.getServerSecurityLevel(target)
 			//number of threads to weaken security to min
 			var wcycle = (cursecurity - securityThresh) / .05
 			//number of threads supported for weaken thread
-			var wgtsupport = freeRAM / wRAM
+			var wgtsupport = freeRAM(hostname) / wRAM
 			//number of weaken threads needed 
 			var wgtneeded = wRAM * wcycle
 			//do we have more ram than is needed?
@@ -78,7 +77,7 @@ export async function main(ns) {
 			ns.print("Weaken Phase")
 			ns.run("weaken.script", wthreads, target);
 			//wait for weaken script to finish
-			await ns.sleep(wtime + 1000);
+			await ns.sleep(target + 1000);
 			//check to make sure weaken script isn't ns.running
 			var wrun = ns.isRunning("weaken.script", hostname, wthreads, target)
 			//if it is, wait for it...
@@ -89,13 +88,17 @@ export async function main(ns) {
 			var u = 13
 		}
 		//grow  
-		else if (moneyavailable < moneyThresh) {
+		else if (moneyavailable(target) < moneyThresh) {
+
 			//if the amount of money on the server is less than half of our goal
-			if (moneyavailable <= .5 * moneyThresh) {
+			if (moneyavailable(target) <= .5 * moneyThresh) {
 				//find out how much growth is needed
-				var totalgrowth = moneyThresh / moneyavailable
+				var totalgrowth = moneyThresh / moneyavailable(target)
+				ns.toast(moneyavailable(target))
 				if (totalgrowth <= 1) { totalgrowth = 1.0001 }
 				//SPAM this many growth cycles
+
+
 				var gcycle = Math.ceil(ns.growthAnalyze(target, totalgrowth))
 			}
 			// total ram needed for weaken threads 
@@ -104,7 +107,7 @@ export async function main(ns) {
 			var gRAMneeded = (gRAM * gcycle) + (wRAMneeded)
 
 			//actual free ram
-			var afr = freeRAM - wgRAMneeded
+			var afr = target - wgRAMneeded
 			//do we need more ram than we have available?
 			if (gRAMneeded > afr) {
 				//yes
@@ -118,13 +121,13 @@ export async function main(ns) {
 			if (wgcycle <= 1) { var wgcycle = 1 }
 			ns.print("Grow Phase")
 			ns.run("grow.script", gthreads, target, a);
-			if (wgRAMneeded + gRAMneeded < freeRAM) { ns.run("weaken.script", wgcycle, target, b) }
-			if (wgRAMneeded + gRAMneeded > freeRAM) {
-				var wgcycle = freeRAM / wRAM
+			if (wgRAMneeded + gRAMneeded < freeRAM(hostname)) { ns.run("weaken.script", wgcycle, target, b) }
+			if (wgRAMneeded + gRAMneeded > freeRAM(hostname)) {
+				var wgcycle = freeRAM(hostname) / wRAM
 				ns.run("weaken.script", wgcycle, target, b)
 			}
 			//ns.run grow script using the number of threads specified in gthreads
-			await ns.sleep(wtime + 1000);
+			await ns.sleep(wtime(target) + 1000);
 			a++
 			b++
 			var wrun = ns.isRunning("weaken.script", hostname, wgcycle, target)
@@ -136,6 +139,7 @@ export async function main(ns) {
 		}
 		//hack
 		else {
+
 			//how many threads are required to hack half the server's money?
 			var hcycle = Math.ceil(.50 / ns.hackAnalyze(target))
 			//security increase of all these threads
@@ -147,7 +151,7 @@ export async function main(ns) {
 			//RAM impact of this
 			var whRAM = wRAM * whcycle
 			//RAM LEFT OVER for hacking =
-			var freeRAMh = freeRAM - whRAM;
+			var freeRAMh = freeRAM(hostname) - whRAM;
 			if (((hRAM + whRAM) > (freeRAMh / hRAM))) {
 				var hthreads = Math.floor(freeRAMh / hRAM)
 			}
@@ -155,7 +159,7 @@ export async function main(ns) {
 			//Total RAM impact
 			var totalramimpact = hthreads * hRAM + whRAM
 			//Left over RAM
-			var loRAM = freeRAM - totalramimpact
+			var loRAM = target - totalramimpact
 			//Do we have more than 256 GB available? (CAN BE CHANGED)
 			if (loRAM > 256) {
 				var gcycle = Math.floor(ns.growthAnalyze(target, 2))
@@ -201,13 +205,13 @@ export async function main(ns) {
 				ns.run("weaken.script", whcycle, target, t, "hac")
 				await ns.sleep(500)
 				ns.run("weaken.script", anumweaken, target, u, "gro");
-				var wgtime = wtime - gtime
+				var wgtime = wtime(target) - gtime(target)
 				await ns.sleep(wgtime - 250);
 				ns.run("grow.script", hgthreads, target, t)
-				var hgtime = gtime - htime
+				var hgtime = gtime(target) - htime(target)
 				await ns.sleep(hgtime - 500)
 				ns.run("hack.script", hcycle, target, u);
-				await ns.sleep(htime + 500)
+				await ns.sleep(htime(target) + 500)
 				if (ns.isRunning("weaken.script", ns.getHostname(), target, u) || ns.isRunning("weaken.script", ns.getHostname(), target, t) || ns.scriptRunning("grow.script", ns.getHostname(), target, t) || ns.scriptRunning("hack.script", ns.getHostname(), target, u) == true) { await ns.sleep(1000) }
 				t++;
 				u++;
@@ -217,20 +221,17 @@ export async function main(ns) {
 				//get grow time
 				var t = 1
 				var u = 13
-				var wminught = wtime - htime - 1000
-				//difference between weaken time and hack time ends 1000ms before weaken does allowing the script to have the same security level
-				var wminusht = wtime - htime - 350
+
 				if (whcycle <= 1) { var whcycle = 1 }
 				if (hthreads <= 1) { var hthreads = 1 }
 				ns.print("Hack Phase, no grow")
 				ns.run("weaken.script", whcycle, target, u);
 				//await ns.sleep for the difference between weaken and hack time
-				await ns.sleep(wminusht)
 				//then hack
 				ns.run("hack.script", hthreads, target, u);
 				u++
 
-				await ns.sleep(htime + wtime / 26)
+				await ns.sleep(wtime(target) + 400)
 
 			}
 		}
