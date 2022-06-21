@@ -3,7 +3,7 @@ export async function main(ns) {
 	var target = ns.args[0]
 	ns.disableLog("getServerMaxRam")
 	ns.disableLog("getServerUsedRam")
-	ns.disableLog("run")
+	//ns.disableLog("run")
 	ns.disableLog("sleep")
 	ns.disableLog("getServerMaxMoney")
 	ns.disableLog("getServerMinSecurityLevel")
@@ -102,7 +102,7 @@ export async function main(ns) {
 			var gRAMneeded = (gRAM * gcycle) + (wRAMneeded)
 
 			//actual free ram
-			var afr = target - wgRAMneeded
+			var afr = freeRAM(target) - wgRAMneeded
 			//do we need more ram than we have available?
 			if (gRAMneeded > afr) {
 				//yes
