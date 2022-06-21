@@ -3,7 +3,7 @@ export async function main(ns) {
 	var target = ns.args[0]
 	ns.disableLog("getServerMaxRam")
 	ns.disableLog("getServerUsedRam")
-	//ns.disableLog("run")
+	ns.disableLog("run")
 	ns.disableLog("sleep")
 	ns.disableLog("getServerMaxMoney")
 	ns.disableLog("getServerMinSecurityLevel")
