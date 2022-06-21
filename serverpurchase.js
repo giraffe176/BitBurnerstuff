@@ -1,52 +1,63 @@
-var desiredname = args[0];
-var attack = args[1];
-//var desiredram = args[1]
-var servermoney = getServerMoneyAvailable("home");
-var max = (servermoney / (1375000) - 0);
-var powtwo = Math.floor(Math.log(max) / Math.log(2));
-toast(powtwo);
+/** @param {NS} ns */
+import { globalserverlist } from 'servers.js'
+export async function main(ns) {
+	var desiredname = ns.args[0];
+	//var desiredram = args[1]
+	var servermoney = ns.getServerMoneyAvailable("home");
+	var max = (servermoney / (1375000) - 0);
+	var powtwo = Math.floor(Math.log(max) / Math.log(2));
+	ns.toast(powtwo);
 
-var serverRAM = Math.pow(2, powtwo) - 0
-toast(serverRAM);
-var sel = getPurchasedServers();
-var serll = sel.length;
-var wtime = getWeakenTime(attack) / 26
-
-if (serll > 0) {
-	if (serverRAM <= (getServerMaxRam(sel[0]) - 0)) {
-		toast("No upgrades can be afforded");
-		var rusure = prompt("No upgrades can be afforded, are you sure you want to buy " + serverRAM + "GB servers?")
-		if (rusure == false) {
-			exit()
+	var serverRAM = Math.pow(2, powtwo) - 0
+	ns.toast(serverRAM);
+	var sel = ns.getPurchasedServers();
+	var serll = sel.length;
+	if (serverRAM > 1048576) { var serverRAM = 1048576 }
+	if (serll > 0) {
+		if (serverRAM <= (ns.getServerMaxRam(sel[0]) - 0)) {
+			ns.toast("No upgrades can be afforded");
+			var rusure = await ns.prompt("No upgrades can be afforded, are you sure you want to buy " + serverRAM + "GB servers?")
+			if (rusure == false) {
+				exit()
+			}
 		}
 	}
-}
 
-var i = 0;
-var confirm = prompt("Buy/Replace Servers with" + serverRAM + "GB");
+	var i = 0;
+	var confirm = await ns.prompt("Buy/Replace Servers with" + serverRAM + "GB");
 
-if (confirm = true) {
+	if (confirm = true) {
 
 
-	sel.foreach(function (s) {
+		for (const s of ns.getPurchasedServers()) {
 
-		killall(s)
-		deleteServer(s)
+			ns.killall(s)
+			ns.deleteServer(s)
 
-	})
+		}
 
-	var q = 0
-	while (q <= 24) {
+		var q = 0
+		while (q <= 24) {
+			ns.purchaseServer(desiredname + "-" + q, serverRAM)
+			++q;
+		}
 
-		var hostname = purchaseServer(desiredname + "-" + q, serverRAM);
-		scp("manager.js", hostname);
-		scp("weaken.script", hostname);
-		scp("growstock.js", hostname);
-		scp("hack.script", hostname);
-		exec("CEO.js", hostname, 1, attack);
-		++q;
-		sleep(wtime);
+
+
+
+		for (const s of ns.getPurchasedServers()) {
+			await ns.scp("CEO.js", s);
+			await ns.scp("weaken.script", s);
+			await ns.scp("growstock.js", s);
+			await ns.scp("hack.script", s);
+			for (const attack of globalserverlist) {
+
+				ns.exec("CEO.js", s, 1, attack);
+			}
+		}
+
 	}
+	else { exit() }
+
 
 }
-else { exit() }
