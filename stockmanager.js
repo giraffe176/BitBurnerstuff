@@ -11,7 +11,7 @@ export async function main(ns) {
 				var k = -1
 				var p = -1
 			}
-			else (.4 < forcast < .6) {
+			else {
 				var k = 0
 				var p = 0
 			}
