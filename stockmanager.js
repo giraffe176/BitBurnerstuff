@@ -7,11 +7,11 @@ export async function main(ns) {
 				var k = 1;
 				var p = 1
 			}
-			if (forcast <= .4) {
+			else if (forcast <= .4) {
 				var k = -1
 				var p = -1
 			}
-			if (.4 < forcast < .6) {
+			else (.4 < forcast < .6) {
 				var k = 0
 				var p = 0
 			}
@@ -37,8 +37,11 @@ export async function main(ns) {
 
 				if (shares > 0) {
 					var profit = (currentprice * shares) - (pricepaid * shares)
-					var percentgain = currentprice / pricepaid
-					ns.tprint("Shares sold for $", profit, "     ", percentgain)
+					var profitdollar = ns.nFormat(profit,'($0.00 a)')
+					
+					var percentgain = (((currentprice / pricepaid)-1)*100)
+					var percent = ns.nformat(percentgain,'0.000%')
+					ns.tprint("Shares sold for ", profitdollar, "     ", percent)
 					ns.stock.sell(s, shares)
 
 				}
