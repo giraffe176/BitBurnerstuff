@@ -72,7 +72,7 @@ export async function main(ns) {
 			else { var wthreads = Math.floor(wgtsupport) }
 			//execute command on server
 			if (wthreads <= 1) { var wthreads = 1 }
-			ns.print("Weaken Phase")
+			ns.print("Weaken Phase    "+wthreads + "wThreads     ")
 			ns.run("weaken.script", wthreads, target);
 			//wait for weaken script to finish
 			await ns.sleep(target + 1000);
@@ -102,7 +102,7 @@ export async function main(ns) {
 			var gRAMneeded = (gRAM * gcycle) + (wRAMneeded)
 
 			//actual free ram
-			var afr = freeRAM(target) - wgRAMneeded
+			var afr = freeRAM(hostname) - wgRAMneeded
 			//do we need more ram than we have available?
 			if (gRAMneeded > afr) {
 				//yes
@@ -114,13 +114,16 @@ export async function main(ns) {
 			}
 			if (gthreads <= 1) { var gthreads = 1 }
 			if (wgcycle <= 1) { var wgcycle = 1 }
-			ns.print("Grow Phase")
+			
 			ns.run("grow.script", gthreads, target, a);
 			if (wgRAMneeded + gRAMneeded < freeRAM(hostname)) { ns.run("weaken.script", wgcycle, target, b) }
 			if (wgRAMneeded + gRAMneeded > freeRAM(hostname)) {
-				var wgcycle = freeRAM(hostname) / wRAM
+				var wgcycle = Math.floor((freeRAM(hostname) / wRAM))
+				
 				ns.run("weaken.script", wgcycle, target, b)
 			}
+
+			ns.print("Grow Phase     "+wgcycle + "wThreads     " + gthreads + "gThreads")
 			//ns.run grow script using the number of threads specified in gthreads
 			await ns.sleep(wtime(target) + 1000);
 			a++
@@ -195,7 +198,8 @@ export async function main(ns) {
 				//remove that second so that grow and hack end when the first weaken script does
 				//wait a second to give the system a breather
 				//remove a little bit of time so that hack comes first
-				ns.print("Hack Phase")
+				var arnum = anumweaken + whcycle
+				ns.print("Hack Phase"+arnum + "wThreads     " + hcycle + "hThreads"+ hgthreads + "gThreads")
 				ns.run("weaken.script", whcycle, target, t, "hac")
 				await ns.sleep(500)
 				ns.run("weaken.script", anumweaken, target, u, "gro");
@@ -218,7 +222,7 @@ export async function main(ns) {
 
 				if (whcycle <= 1) { var whcycle = 1 }
 				if (hthreads <= 1) { var hthreads = 1 }
-				ns.print("Hack Phase, no grow")
+				ns.print("Hack Phase, no grow     "+whcycle + "wThreads     " + hthreads + "hThreads")
 				ns.run("weaken.script", whcycle, target, u);
 				//await ns.sleep for the difference between weaken and hack time
 				//then hack
